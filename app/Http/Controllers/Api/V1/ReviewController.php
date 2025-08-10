@@ -39,8 +39,8 @@ class ReviewController extends Controller
         $user = Auth::user();
         if ($user->id_user !== $review->id_user && !$user->hasRole(['admin', 'petugas'])) {
             return response()->json([
-                'message' => 'Tidak Punya Hak Akses'
-            ],403);
+               'message' => 'Anda Tidak Punya hak akses untuk menghapus ulasan ini' 
+            ], 403);
         }
 
         $review->delete();

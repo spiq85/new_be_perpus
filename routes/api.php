@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function(){
 
     // Routes Review
     Route::post('/reviews/{book}', [ReviewController::class, 'store']);
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
 
     // Routes Collection
     Route::post('/collections/{book}', [CollectionController::class, 'toggle']);
@@ -78,9 +79,6 @@ Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
-
-    // Route Review
-    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
 
     // Generate Laporan Buku
     Route::get('/reports/books', [ReportController::class, 'generateBookReport']);
