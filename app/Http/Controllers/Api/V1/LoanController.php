@@ -66,7 +66,6 @@ class LoanController extends Controller
         ],422);
       }
 
-      $loan->book->decrement('stock');
 
       $loan->update([
         'status_peminjaman' => 'dipinjam',
@@ -91,7 +90,6 @@ class LoanController extends Controller
             'status_peminjaman' => 'dikembalikan'
         ]);
 
-        $loan->book->increment('stock');
 
         return response()->json([
             'message' => 'Buku berhasil dikembalikan.', 'data' => $Loan
