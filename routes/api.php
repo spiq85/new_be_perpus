@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\ReviewReportController;
+use App\Http\Controllers\Api\V1\ForgotPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +30,10 @@ Route::get('/books', [BookController::class, 'index']);
 Route::get('/books/{book}', [BookController::class, 'show']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Forgot Password
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+Route::post('/reset-password', [ForgotPasswordController::class, 'reset']);
 
 // User Routes
 Route::middleware('auth:sanctum')->group(function(){
@@ -57,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function(){
 Route::middleware('auth:sanctum', 'role:petugas')->group(function (){
     Route::get('/loans', [LoanController::class, 'index']);
     Route::put('/loans/{loan}/validate', [LoanController::class, 'validateLoan']);
+    Route::put('/loans/{loan}/pickup', [LoanController::class, 'pickupConfirmation']);
     Route::put('/loans/{loan}/return', [LoanController::class, 'returnBook']);
     Route::get('/reports/loans', [ReportController::class, 'generateLoanReport']);
 });

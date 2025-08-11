@@ -3,21 +3,18 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request\StoreLoanRequest;
 use App\Models\Loan;
 use App\Models\Book;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Events\LoanRequested;
 
 class LoanController extends Controller
 {
     // User Melakukan Peminjaman Buku
-    public function store(Request $request)
+    public function store(StoreLoanRequest $request)
     {
-        $request->validate([
-            'id_book' => 'required|exists:books,id_book',
-        ]);
-
         $book = Book::find($request->id_book);
 
         if ($book->stock < 1) {
@@ -33,6 +30,8 @@ class LoanController extends Controller
             'tanggal_pengembalian' => null,
             'status_peminjaman' => 'pending',
         ]);
+
+        LoanRequested::dispatch($loan);
 
         return response()->json([
             'message' => 'Pengajuan peminjaman berhasil, tunggu validasi petugas.' , 'data' => $loan
@@ -68,31 +67,68 @@ class LoanController extends Controller
 
 
       $loan->update([
-        'status_peminjaman' => 'dipinjam',
-        'tanggal_peminajaman' => now(),
-        'tanggal_pengembalian' => now()->addDays(7),
+        'status_peminjaman' => 'siap_diambil',
+        'due_date' => now()->addDays(7)
       ]);
-      return response()->json([
-        'message' => 'Peminjaman berhasil divalidasi.' , 'data' => $loan
-      ]);
+      
+    //   UserHasBookReadyForPickup::dispatch($loan);
+    return response()->json([
+        'message' => 'Peminjaman berhasil divalidasi. Buku siap diambil.', 'data' => $loan
+        ]);
     }
 
-    public function returnBook(Loan $Loan)
+    public function pickupConfirmation(Loan $loan)
     {
-        if ($loan->status_peminajaman === 'dikembalikan') {
+        if ($loan->status_peminjaman !== 'siap_diambil') {
             return response()->json([
-                'message' => 'Buku ini sudah dikembalikan sebelumnya'
+                'message' => 'Buku ini belum divalidasi atau sudah dipinjam'
             ],422);
         }
 
+        $loan->book->decrement('stock');
         $loan->update([
-            'tanggal_pengembalian' => now(),
-            'status_peminjaman' => 'dikembalikan'
+            'status_peminjaman' => 'dipinjam',
+            'tanggal_peminjaman' => now()
         ]);
-
 
         return response()->json([
-            'message' => 'Buku berhasil dikembalikan.', 'data' => $Loan
+            'message' => 'Buku berhasil diambil oleh peminjam', 'data' => $loan
         ]);
+    }
+
+    public function returnBook(Request $request,Loan $loan)
+    {
+       $request->validate([
+        'condition' => 'required|string|in:baik,rusak,hilang',
+       ]);
+
+       if (in_array($loan->status_peminjaman, ['dikembalikan','hilang','rusak'])) {
+        return response()->json([
+            'message' => 'Buku ini statusnya sudah selesai diproses.'
+        ],422);
+       }
+
+       $book = $loan->book;
+       $newStatus = 'dikembalikan';
+
+       switch ($request->condition) {
+        case 'baik';
+            $newStatus = 'dikembalikan';
+            $book->increment('stock');
+            break;
+        case 'rusak';
+            $newStatus = 'rusak';
+            break;
+        case 'hilang';
+            $newStatus = 'hilang';
+            break;
+       }
+       $loan->update([
+        'tanggal_pengembalian' => now(),
+        'status_peminjaman' => $newStatus
+       ]);
+       return response()->json([
+        'message' => 'Buku berhasil diproses dengan status:' . $newStatus, 'data' => $loan
+       ]);
     }
 }

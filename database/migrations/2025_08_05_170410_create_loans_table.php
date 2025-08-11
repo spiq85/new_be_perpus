@@ -21,7 +21,8 @@ return new class extends Migration
             ->onDelete('cascade');
             $table->date('tanggal_peminjaman');
             $table->date('tanggal_pengembalian')->nullable();
-            $table->enum('status_peminjaman', ['pending', 'dipinjam', 'dikembalikan', 'terlambat']);
+            $table->enum('status_peminjaman', ['pending', 'siap_diambil', 'dipinjam', 'dikembalikan', 'terlambat', 'hilang', 'rusak']);
+            $table->integer('denda')->default(0);
             $table->timestamps();
         });
     }
