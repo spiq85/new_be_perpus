@@ -48,7 +48,13 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if(!$user || !Hash::check($request->password, $user->password)) {
+        if ($user && $user->banned_at) {
+            return response()->json([
+                'message' => 'Akun anda telah di banned'
+            ]);
+        }
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Email atau Password salah'
             ], 401);

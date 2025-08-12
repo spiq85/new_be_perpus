@@ -55,4 +55,22 @@ class UserController extends Controller
             'message' => 'User Berhasil Dihapus'
         ]);
     }
+
+    public function ban(User $user)
+    {
+        $user0>update([
+            'banned_at' => now()
+        ]);
+        return response()->json([
+            'message' => 'User berhasil di banned'
+        ]);
+    }
+
+    public function unban(User $user)
+    {
+        $user->update(['banned_at' => null]);
+        return response()->json([
+            'message' => 'User berhasil di unbanned'
+        ]);
+    }
 }

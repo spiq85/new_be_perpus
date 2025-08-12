@@ -85,6 +85,8 @@ Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    Route::put('/users/{user}/ban', [UserController::class, 'ban']);
+    Route::put('/users/{user}/unban', [UserController::class, 'unban']);
 
     // Generate Laporan Buku
     Route::get('/reports/books', [ReportController::class, 'generateBookReport']);
