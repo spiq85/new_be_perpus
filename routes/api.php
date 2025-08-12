@@ -26,10 +26,10 @@ use App\Http\Controllers\Api\V1\ForgotPasswordController;
 */
 
 // Public Routes
-Route::get('/books', [BookController::class, 'index']);
-Route::get('/books/{book}', [BookController::class, 'show']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/books', [BookController::class, 'index']);
+Route::get('/books/{book}', [BookController::class, 'show']);
 
 // Forgot Password
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
