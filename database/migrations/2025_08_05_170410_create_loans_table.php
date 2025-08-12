@@ -20,6 +20,7 @@ return new class extends Migration
             ->constrained('books', 'id_book')
             ->onDelete('cascade');
             $table->date('tanggal_peminjaman');
+            $table->date('due_date');
             $table->date('tanggal_pengembalian')->nullable();
             $table->enum('status_peminjaman', ['pending', 'siap_diambil', 'dipinjam', 'dikembalikan', 'terlambat', 'hilang', 'rusak']);
             $table->integer('denda')->default(0);
