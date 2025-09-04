@@ -59,7 +59,7 @@ Route::middleware('auth:sanctum')->group(function(){
 });
 
 // Officer Routes
-Route::middleware('auth:sanctum', 'role:petugas')->group(function (){
+Route::middleware('auth:sanctum', 'role:petugas')->prefix('petugas')->group(function (){
     Route::get('/loans', [LoanController::class, 'index']);
     Route::put('/loans/{loan}/validate', [LoanController::class, 'validateLoan']);
     Route::put('/loans/{loan}/pickup', [LoanController::class, 'pickupConfirmation']);
@@ -70,6 +70,7 @@ Route::middleware('auth:sanctum', 'role:petugas')->group(function (){
 // Admin Routes 
 Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function (){
     // CRUD BUKU
+    Route::get('/books', [BookController::class, 'index']);
     Route::post('/books', [BookController::class, 'store']);
     Route::put('/books/{book}', [BookController::class, 'update']);
     Route::delete('/books/{book}', [BookController::class, 'destroy']);

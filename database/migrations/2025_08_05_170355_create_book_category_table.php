@@ -17,7 +17,7 @@ return new class extends Migration
             ->constrained('books', 'id_book')
             ->onDelete('cascade');
             $table->foreignId('id_category')
-            ->contrained('categories', 'id_category')
+            ->constrained('categories', 'id_category')
             ->onDelete('cascade');
             $table->timestamps();
         });
