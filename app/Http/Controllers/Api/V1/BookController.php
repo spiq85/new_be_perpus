@@ -15,15 +15,29 @@ class BookController extends Controller
 
         if ($request->has('search')) {
             $books->where('title', 'like', '%' . $request->search . '%')
-            ->orWhere('author', 'like', '%', $request->search . '%' );
+            ->orWhere('author', 'like', '%'. $request->search . '%' );
         }
 
-        return response()->json($books->paginate(10));
+        return response()->json(
+            $books->paginate(10)->through(function ($book) {
+                return [
+                    'id' => $book->id_book,
+                    'title' => $book->title,
+                    'author' => $book->author,
+                    'cover' => $book->getFirstMediaUrl('cover'),
+                ];
+            })
+        );
     }
 
     public function show(Book $book)
     {
-        return response()->json($book); 
+        return response()->json([
+            'id' => $book->id_book,
+            'title' => $book->title,
+            'author' => $book->author,
+            'cover' => $book->getFirstMediaUrl('cover'),
+        ]); 
     }
 
     // Sisi Admin
@@ -36,7 +50,7 @@ class BookController extends Controller
             'publish_year' => 'required|digits:4',
             'stock' => 'required|integer',
             'description' => 'required|string',
-            'cover' => 'nullable|image|mime:jpeg,png,jpg,gif|max:2048',
+            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $book = Book::create($request->only([
