@@ -36,16 +36,46 @@ class BookController extends Controller
             'publish_year' => 'required|digits:4',
             'stock' => 'required|integer',
             'description' => 'required|string',
+            'cover' => 'nullable|image|mime:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $book = Book::create($request::all());
-        return response()->json($book, 201);
+        $book = Book::create($request->only([
+            'title', 'author', 'publisher', 'publish_year', 'stock', 'description'
+        ]));
+        
+        if ($request->hasFile('cover')) {
+            $book->addMedia($request->file('cover'))->toMediaCollection('cover');
+        }
+
+        return response()->json([
+            'message' => 'Book Created Successfully',
+            'data' => [
+                'id' => $book->id_book,
+                'title' => $book->title,
+                'cover' => $book->getFirstMediaUrl('cover'),
+            ]
+        ], 201);
     }
 
     public function update(Request $request, Book $book)
     {
-        $book->update($request->all());
-        return response()->json($book);
+        $book->update($request->only([
+            'title', 'author', 'publisher', 'publish_year', 'stock', 'description'
+        ]));
+
+        if ($request->hasFile('cover')) {
+            $book->clearMediaCollection('cover');
+            $book->addMedia($request->file('cover'))->toMediaCollection('cover');
+        }
+
+        return response()->json([
+            'message' => 'Book Updated Successfully',
+            'data' => [
+                'id' => $book->id_book,
+                'title' => $book->title,
+                'cover' => $book->getFirstMediaUrl('cover'),
+            ]
+        ]);
     }
 
     public function destroy(Book $book)
