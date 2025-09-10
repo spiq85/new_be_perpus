@@ -60,15 +60,28 @@ Route::middleware('auth:sanctum')->group(function(){
 
 // Officer Routes
 Route::middleware('auth:sanctum', 'role:petugas')->prefix('petugas')->group(function (){
+
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']); 
+
+    // Loans Routes
     Route::get('/loans', [LoanController::class, 'index']);
     Route::put('/loans/{loan}/validate', [LoanController::class, 'validateLoan']);
     Route::put('/loans/{loan}/pickup', [LoanController::class, 'pickupConfirmation']);
     Route::put('/loans/{loan}/return', [LoanController::class, 'returnBook']);
     Route::get('/reports/loans', [ReportController::class, 'generateLoanReport']);
+    Route::get('/reports/fines', [ReportController::class, 'generateFineReport']);
 });
 
 // Admin Routes 
 Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function (){
+
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Laons Routes
+    Route::get('/loans', [LoanController::class, 'index']);
+
     // CRUD BUKU
     Route::get('/books', [BookController::class, 'index']);
     Route::post('/books', [BookController::class, 'store']);
@@ -91,4 +104,6 @@ Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function
 
     // Generate Laporan Buku
     Route::get('/reports/books', [ReportController::class, 'generateBookReport']);
+    Route::get('/reports/books/popular', [ReportController::class, 'generatePopularBooksReport']);
+    Route::get('/reports/books/category-stats', [ReportController::class, 'generateCategoryStatsReport']);
 });

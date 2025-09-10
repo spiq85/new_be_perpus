@@ -11,19 +11,31 @@ class BookController extends Controller
     // Sisi User
     public function index(Request $request)
     {
-        $books = Book::query();
+        $books = Book::with('categories');
 
         if ($request->has('search')) {
-            $books->where('title', 'like', '%' . $request->search . '%')
-            ->orWhere('author', 'like', '%'. $request->search . '%' );
+            $books->where(function($q) use ($request){
+                $q->where('title', 'like', '%' . $request->search . '%')
+                    ->orWhere('author', 'like', '%' . $request->search . '%');
+            });
         }
 
         return response()->json(
-            $books->paginate(10)->through(function ($book) {
+            $books->paginate(10)->through(function($book){
                 return [
                     'id' => $book->id_book,
                     'title' => $book->title,
                     'author' => $book->author,
+                    'publisher' => $book->publisher,
+                    'publish_year' => $book->publish_year,
+                    'description' => $book->description,
+                    'stock' => $book->stock,
+                    'category' => $book->categories->first()
+                        ? [
+                            'id' => $book->categories->first()->id_category,
+                            'category_name' => $book->categories->first()->category_name,
+                        ]
+                        : null,
                     'cover' => $book->getFirstMediaUrl('cover'),
                 ];
             })
@@ -32,12 +44,25 @@ class BookController extends Controller
 
     public function show(Book $book)
     {
+        $book->load('categories');
+
         return response()->json([
             'id' => $book->id_book,
             'title' => $book->title,
             'author' => $book->author,
+            'publisher' => $book->publisher,
+            'publish_year' => $book->publish_year,
+            'stock' => $book->stock,
+            'description' => $book->description,
+            'stock' => $book->stock,
+            'category' => $book->categories->first()
+            ? [
+                'id' => $book->categories->first()->id_category,
+                'category_name' => $book->categories->first()->category_name,
+            ]
+            : null,
             'cover' => $book->getFirstMediaUrl('cover'),
-        ]); 
+        ]);
     }
 
     // Sisi Admin
@@ -57,8 +82,8 @@ class BookController extends Controller
             'title', 'author', 'publisher', 'publish_year', 'stock', 'description'
         ]));
         
-        if ($request->hasFile('cover')) {
-            $book->addMedia($request->file('cover'))->toMediaCollection('cover');
+        if ($request->hasFile('image')) {
+            $book->addMedia($request->file('image'))->toMediaCollection('cover');
         }
 
         return response()->json([

@@ -11,7 +11,16 @@ class CategoryController extends Controller
     // Menampilkan daftar kategori
     public function index()
     {
-        return response()->json(Category::all());
+        $categories = Category::withCount('books')->get()->map(function($cat){
+            return [
+                'id' => $cat->id_category,
+                'category_name' => $cat->category_name,
+                'description' => $cat->description,
+                'books_count' => $cat->books_count,
+            ];
+        });
+
+        return response()->json($categories);
     }
 
     // Menampilkan detail kategori
@@ -25,6 +34,7 @@ class CategoryController extends Controller
     {
         $request->validate([
             'category_name' => 'required|string|unique:categories,category_name',
+            'description' => 'nullable|string',
         ]);
 
         $category = Category::create($request->all());
@@ -36,7 +46,8 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $request->validate([
-            'category_name' => 'required|string|unique:categories,category_name,' . $category->id_category . ',id_category'
+            'category_name' => 'required|string|unique:categories,category_name,' . $category->id_category . ',id_category',
+            'description' => 'nullable|string',
         ]);
 
         $category->update($request->all());

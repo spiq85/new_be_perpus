@@ -17,7 +17,7 @@ class DashboardController extends Controller
         $data = [];
 
         if ($user->hasRole('admin')) {
-            $data = $this->getAdminDashboarData();
+            $data = $this->getAdminDashboardData();
         } elseif ($user->hasRole('petugas')) {
             $data = $this->getPetugasDashboardData();
         } else {
@@ -30,19 +30,24 @@ class DashboardController extends Controller
     private function getAdminDashboardData()
     {
         return [
-            'message' => 'Welcome, Admin',
-            'stats' => [
-                'total_users' => User::count(),
-                'total_books' => Book::count(),
-            ]
+            'totalBooks' => Book::count(),
+            'totalUsers' => User::count(),
+            'activeLoans' => Loan::where('status_peminjaman', 'dipinjam')->count(),
+            'pendingLoans' => Loan::where('status_peminjaman', 'pending')->count(),
+            'overdue' => Loan::where('status_peminjaman', 'terlambat')->count(),
+            'todayReturns' => Loan::whereDate('tanggal_peminjaman', now())->count(),
         ];
     }
 
     private function getPetugasDashboardData()
     {
         return [
-            'message' => 'Welcome, Petugas',
-            'pending_loans' => Loan::where('status_peminjaman', 'pending')->count(),
+            'totalBooks' => Book::count(),
+            'totalUsers' => User::count(),
+            'activeLoans' => Loan::where('status_peminjaman', 'dipinjam')->count(),
+            'pendingLoans' => Loan::where('status_peminjaman', 'pending')->count(),
+            'overdue' => Loan::where('status_peminjaman', 'terlambat')->count(),
+            'todayReturns' => Loan::whereDate('tanggal_peminjaman', now())->count(),
         ];
     }
 

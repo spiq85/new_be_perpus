@@ -9,27 +9,38 @@ use Carbon\Carbon;
 class CheckOverdueLoans extends Command
 {
     protected $signature = 'app:check-overdue-loans';
-    protected $description = 'Cek peminjaman yang telat dan update status serta denda';
+    protected $description = 'Cek peminjaman yang telat/rusak/hilang dan update status serta denda';
 
     public function handle()
     {
-        $this->info('Mulai pengecekan buku yang terlambat...');
+        $this->info('Memulai pengecekan peminjaman...');
 
-        $overdueLoans= Loan::where('status_peminjaman', 'dipinjam')
-                                ->where('due_date', '<', Carbon::today())
-                                ->get();
+        $today = Carbon::today();
 
-        foreach ($overdueLoans as $loan) {
-            $overdueDays = Carbon::today()->diffInDays($loan->due_date);
+        $loans = Loan::whereIn('status_peminjaman',['dipinjam', 'terlambat', 'hilang', 'rusak'])
+            ->where('due_date', '<', $today)
+            ->get();
 
-            $fine = $overdueDays * 500;
+        foreach ($Loans as $loan) {
+            $overdueDays = $today->diffInDays(Carbon::parse($loan->due_date));
+            $finePerDay = 5000; // Denda Jika Telat Per Hari
+            $fine = $overdueDays * $finePerDay;
 
-            $loan->update([
-                'status_peminjaman' => 'terlambat',
-                'denda' => $fine,
-            ]);
-            $this->info("User #{$loan->id_user} yelat mengembalikan buku #{$loan->id_book}. Denda: #{$fine}");
+            if ($loan->status_peminjaman === 'hilang') {
+                $fine += 50000; // Denda Tambahan Jika Buku Hilang
+            } elseif ($loan->status_peminjaman === 'rusak') {
+                $fine += 25000; // Denda Tambahan Jika Buku Rusak
+            }
+
+            if ($loan->status_peminjaman === 'dipinjam' && $overdueDays > 0){
+                $loan->status_peminjaman = 'terlambat';
+            }
+
+            $loan->denda = $fine;
+            $loan->save();
+
+            $this->info("User #{$loan->id_user} telat/hilang/rusak buku #{$loan->id_book}. Denda: Rp {$fine}");
         }
-        $this->info('Pengecekan Selesai.');
+        $this->info("Pengecekan Selesai."); 
     }
 }
