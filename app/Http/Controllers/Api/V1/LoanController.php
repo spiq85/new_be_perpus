@@ -26,7 +26,7 @@ class LoanController extends Controller
         $loan = Loan::create([
             'id_user' => Auth::id(),
             'id_book' => $book->id_book,
-            'tanggal_peminjaman' => now(),
+            'tanggal_peminjaman' => null,
             'tanggal_pengembalian' => null,
             'status_peminjaman' => 'pending',
         ]);
@@ -68,7 +68,6 @@ class LoanController extends Controller
 
       $loan->update([
         'status_peminjaman' => 'siap_diambil',
-        'due_date' => now()->addDays(7)
       ]);
       
     //   UserHasBookReadyForPickup::dispatch($loan);
@@ -88,7 +87,8 @@ class LoanController extends Controller
         $loan->book->decrement('stock');
         $loan->update([
             'status_peminjaman' => 'dipinjam',
-            'tanggal_peminjaman' => now()
+            'tanggal_peminjaman' => now(),
+            'due_date' => now()->addDays(7),
         ]);
 
         return response()->json([

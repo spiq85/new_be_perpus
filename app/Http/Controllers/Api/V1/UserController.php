@@ -11,9 +11,23 @@ use Spatie\Permission\Models\Role;
 class UserController extends Controller
 {
     // Menampilkan Semua Data User
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(User::with('roles')->paginate(15));
+        $query = User::with('roles')
+            ->withCount([
+                'loans as active_loans' => fn($q) => $q->whereIn('status_peminjaman', ['siap_diambil', 'dipinjam', 'terlambat']),
+                'loans as overude_loans' => fn($q) => $q->where('status_peminjaman', 'terlmabat'),
+                'loans as returned_loans' => fn($q) => $q->where('status_peminjaman', 'dikembalikan'),
+            ]);
+
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search){
+                $q->where('username', 'like', "%{$search}%")
+                    ->orWhere('role', 'like', "%{$search}%");
+            });
+        }
+        return response()->json($query->paginate(15));
     }
 
     public function store(Request $request)
@@ -23,7 +37,7 @@ class UserController extends Controller
             'email' => 'required|string|email|unique:users,email',
             'password' => 'required|string|min:8',
             'nama_lengkap' => 'required|string',
-            'alamat' => 'required|string',
+            'alamat' => 'nullable|string',
             'role' => 'required|in:petugas,admin',
         ]);
 
@@ -44,11 +58,12 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        if (auth()->id_user === $user->id_user) {
+        if (auth()->user()->id_user === $user->id_user) {
             return response()->json([
                 'message' => 'Tidak Bisa Menghapus Akun Sendiri'
-            ]);
+            ],403);
         }
+
         $user->delete();
 
         return response()->json([
@@ -58,7 +73,7 @@ class UserController extends Controller
 
     public function ban(User $user)
     {
-        $user0>update([
+        $user->update([
             'banned_at' => now()
         ]);
         return response()->json([
