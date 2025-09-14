@@ -39,7 +39,11 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'reset']);
 Route::middleware('auth:sanctum')->group(function(){
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Peminjaman
+    // Books Routes
+    Route::get('books',[BookController::class, 'index']);
+    Route::get('books/{book}', [BookController::class, 'show']);
+
+    // Loans Routes
     Route::post('/loans', [LoanController::class, 'store']);
     Route::get('/my-loans', [LoanController::class, 'myLoans']);
 

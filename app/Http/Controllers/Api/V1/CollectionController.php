@@ -40,6 +40,29 @@ class CollectionController extends Controller
         ->latest()
         ->get();
 
-        return response()->json($collections);
+        return response()->json(
+            $collections->map(function($collection){
+                $book = $collection->book;
+                return [
+                    'id_collection' => $collection->id_collection,
+                    'book' => [
+                        'id' => $book->id_book,
+                        'title' => $book->title,
+                        'author' => $book->author,
+                        'publisher' => $book->publisher,
+                        'publish_year' => $book->publish_year,
+                        'description' => $book->description,
+                        'stock' => $book->stock,
+                        'category' => $book->categories->first()
+                        ? [
+                            'id' => $book->categories->first()->id_category,
+                            'category_name' => $book->categories->first()->category_name,
+                        ]
+                        : null,
+                        'cover' => $book->getFirstMediaUrl('cover'),
+                    ],
+                ];
+            })
+        );
     }
 }

@@ -46,7 +46,22 @@ class LoanController extends Controller
             ->latest()
             ->get();
 
-            return response()->json($loans);
+            return response()->json(
+                $loans->map(function($loan){
+                    $book = $loan->book,
+                    return [
+                        'id_loan' => $loan->id_loan,
+                        'status' => $loan->status_peminjaman,
+                        'tanggal_peminjaman' => $loan->tanggal_peminjaman,
+                        'tanggal_pengembalian' => $loan->tanggal_pengembalian,
+                        'book' => [
+                            'id' => $book->id_book
+                            'title' => $book->title,
+                            'cover' => $book->getFirstMediaUrl('cover'),
+                        ],
+                    ];
+                })
+            );
     }
 
     // Sisi Admin/Petugas Melihat Semua Data Peminjaman

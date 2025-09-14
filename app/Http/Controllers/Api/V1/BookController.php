@@ -21,7 +21,7 @@ class BookController extends Controller
         }
 
         return response()->json(
-            $books->paginate(10)->through(function($book){
+            $books->get()->map(function($book){
                 return [
                     'id' => $book->id_book,
                     'title' => $book->title,
