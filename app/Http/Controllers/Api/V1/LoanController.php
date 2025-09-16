@@ -48,14 +48,14 @@ class LoanController extends Controller
 
             return response()->json(
                 $loans->map(function($loan){
-                    $book = $loan->book,
+                    $book = $loan->book;
                     return [
                         'id_loan' => $loan->id_loan,
                         'status' => $loan->status_peminjaman,
                         'tanggal_peminjaman' => $loan->tanggal_peminjaman,
                         'tanggal_pengembalian' => $loan->tanggal_pengembalian,
                         'book' => [
-                            'id' => $book->id_book
+                            'id' => $book->id_book,
                             'title' => $book->title,
                             'cover' => $book->getFirstMediaUrl('cover'),
                         ],
@@ -88,6 +88,24 @@ class LoanController extends Controller
     //   UserHasBookReadyForPickup::dispatch($loan);
     return response()->json([
         'message' => 'Peminjaman berhasil divalidasi. Buku siap diambil.', 'data' => $loan
+        ]);
+    }
+
+    public function rejectionLoan(Loan $loan)
+    {
+        if ($loan->status_peminjaman !== 'pending') {
+            return response()->json([
+                'message' => 'Peminjaman ini sudah diproses'
+            ],422);
+        }
+
+        $loan->update([
+            'status_peminjaman' => 'ditolak',
+        ]);
+        
+        return response()->json([
+            'message' => 'Peminjaman ditolak',
+            'data' => $loan,
         ]);
     }
 

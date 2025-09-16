@@ -30,12 +30,12 @@ class BookController extends Controller
                     'publish_year' => $book->publish_year,
                     'description' => $book->description,
                     'stock' => $book->stock,
-                    'category' => $book->categories->first()
-                        ? [
-                            'id' => $book->categories->first()->id_category,
-                            'category_name' => $book->categories->first()->category_name,
-                        ]
-                        : null,
+                    'categories' => $book->categories->map(function($c){
+                        return [
+                            'id' => $c->id_category,
+                            'category_name' => $c->category_name,
+                        ];
+                    }),
                     'cover' => $book->getFirstMediaUrl('cover'),
                 ];
             })
@@ -55,12 +55,12 @@ class BookController extends Controller
             'stock' => $book->stock,
             'description' => $book->description,
             'stock' => $book->stock,
-            'category' => $book->categories->first()
-            ? [
-                'id' => $book->categories->first()->id_category,
-                'category_name' => $book->categories->first()->category_name,
-            ]
-            : null,
+            'categories' => $book->categories->map(function($c){
+                return [
+                    'id' => $c->id_category,
+                    'category_name' => $c->category_name,
+                ];
+            }),
             'cover' => $book->getFirstMediaUrl('cover'),
         ]);
     }
