@@ -39,12 +39,23 @@ class LoanController extends Controller
     }
 
     // User Melihat Riwayat Peminjaman Buku
-    public function myLoans()
+    public function myLoans(Request $request)
     {
         $loans = Loan::where('id_user', Auth::id())
             ->with('book')
             ->latest()
             ->get();
+
+            if ($request->has('search') && $request->search != ''){
+                $search = $request->Search;
+                $loans->whereHas('book' function ($q) use ($search){
+                    $q->where('title', 'like', "%$search%" );
+                });
+            }
+
+            if($request->has('status') && $request->status != 'all'){
+                $loans->where('status_peminjaman', $request->status);
+            }
 
             return response()->json(
                 $loans->map(function($loan){
@@ -65,9 +76,23 @@ class LoanController extends Controller
     }
 
     // Sisi Admin/Petugas Melihat Semua Data Peminjaman
-    public function index()
+    public function index(Request $request)
     {
-        $loans = Loan::with(['book', 'user'])->latest()->paginate(20);
+        $loans = Loan::with(['book', 'user'])->latest();
+        
+        if ($request->has('search') && $request->search != ''){
+            $search = $request->search;
+            $loans->whereHas('user' function($q) use ($search){
+                $q->where('username', 'like', "%$search%")
+                    ->orWhere('nama_lengkap', 'like', "%$search%");
+            })->orWhereHas('book' function($q) use ($search){
+                $q->where('title', 'like', "%$search%");
+            });
+        }
+
+        if ($request->has('search') && $request->status != 'all'){
+            $loans->where("status_peminjaman", $request->status);
+        }
         return response()->json($loans);
     }
 
