@@ -35,8 +35,12 @@ Route::get('/books/{book}', [BookController::class, 'show']);
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'reset']);
 
+Route::middleware('auth:sanctum')->get('/user', function (Request $request){
+    return $request->user();
+});
+
 // User Routes
-Route::middleware('auth:sanctum')->group(function(){
+Route::middleware('auth:sanctum',)->group(function(){
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Books Routes

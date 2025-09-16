@@ -41,62 +41,69 @@ class LoanController extends Controller
 
     // User Melihat Riwayat Peminjaman Buku
     public function myLoans(Request $request)
-{
-    $loans = Loan::where('id_user', Auth::id())
-        ->with('book')
-        ->latest();
+    {
+        $loans = Loan::where('id_user', Auth::id())
+            ->with(['book', 'user'])
+            ->latest();
 
-    if ($request->has('search') && $request->search != '') {
-        $search = $request->search;
-        $loans->whereHas('book', function ($q) use ($search) {
-            $q->where('title', 'like', "%$search%");
-        });
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $loans->whereHas('book', function ($q) use ($search) {
+                $q->where('title', 'like', "%$search%");
+            });
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $loans->where('status_peminjaman', $request->status);
+        }
+
+        return response()->json(
+            $loans->get()->map(function($loan){
+                return [
+                    'id_loan' => $loan->id_loan,
+                    'status' => $loan->status_peminjaman,
+                    'tanggal_peminjaman' => $loan->tanggal_peminjaman,
+                    'tanggal_pengembalian' => $loan->tanggal_pengembalian,
+                    'book' => [
+                        'id' => $loan->book->id_book,
+                        'title' => $loan->book->title,
+                        'cover' => $loan->book->getFirstMediaUrl('cover'),
+                    ],
+                    'user' => [
+                        'id' => $loan->user->id_user,
+                        'username' => $loan->user->username,
+                        'nama_lengkap' => $loan->user->nama_lengkap,
+                    ]
+                ];
+            })
+        );
     }
 
-    if ($request->has('status') && $request->status != 'all') {
-        $loans->where('status_peminjaman', $request->status);
-    }
-
-    return response()->json(
-        $loans->get()->map(function($loan){
-            $book = $loan->book;
-            return [
-                'id_loan' => $loan->id_loan,
-                'status' => $loan->status_peminjaman,
-                'tanggal_peminjaman' => $loan->tanggal_peminjaman,
-                'tanggal_pengembalian' => $loan->tanggal_pengembalian,
-                'book' => [
-                    'id' => $book->id_book,
-                    'title' => $book->title,
-                    'cover' => $book->getFirstMediaUrl('cover'),
-                ],
-            ];
-        })
-    );
-}
     // Sisi Admin/Petugas Melihat Semua Data Peminjaman
     public function index(Request $request)
-{
-    $loans = Loan::with(['book', 'user'])->latest();
+    {
+        $loans = Loan::with(['book', 'user'])->latest();
 
-    if ($request->has('search') && $request->search != '') {
-        $search = $request->search;
-        $loans->where(function($q) use ($search) {
-            $q->whereHas('user', function($q2) use ($search){
-                $q2->where('username', 'like', "%$search%")
-                   ->orWhere('nama_lengkap', 'like', "%$search%");
-            })->orWhereHas('book', function($q2) use ($search){
-                $q2->where('title', 'like', "%$search%");
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $loans->where(function($q) use ($search){
+                $q->whereHas('user', function($q2) use($search){
+                    $q2->where('username', 'like', "%$search%")
+                    ->orWhere('nama_lengkap', 'like', "%$search%");
+                })
+                ->orWhereHas('book', function($q2) use ($search){
+                    $q2->where('title', 'like', "%$search%");
+                });
             });
-        });
+        }
+        
+        if ($request->filled('status') && $request->status !== 'all') {
+            $loans->where("status_peminjaman", $request->status);
+        }
+
+        return response()->json($loans->With(['book', 'user'])->get());
     }
 
-    if ($request->has('status') && $request->status != 'all') {
-        $loans->where("status_peminjaman", $request->status);
-    }
-
-    return response()->json($loans->get());
-}
     // Petugas/Admin Update Status Peminjaman
     public function validateLoan(Loan $loan)
     {

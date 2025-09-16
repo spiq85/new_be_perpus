@@ -35,10 +35,10 @@ class CollectionController extends Controller
 
     public function index()
     {
-        $collections = Auth::user()->collections()
-        ->with('book.categories')
-        ->latest()
-        ->get();
+        $collections = Collection::with(['book', 'book.categories'])
+            ->where('id_user', Auth::id())
+            ->latest()
+            ->get();
 
         return response()->json(
             $collections->map(function($collection){
