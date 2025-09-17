@@ -22,7 +22,7 @@ class LoanRequested
      */
     public function __construct(Loan $loan)
     {
-        $this->Loan = $loan;
+        $this->loan = $loan;
     }
 
     /**

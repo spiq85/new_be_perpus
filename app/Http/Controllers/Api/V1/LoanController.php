@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request\StoreLoanRequest;
+use App\Http\Requests\StoreLoanRequest;
 use Illuminate\Http\Request;
 use App\Models\Loan;
 use App\Models\Book;
@@ -101,7 +101,7 @@ class LoanController extends Controller
             $loans->where("status_peminjaman", $request->status);
         }
 
-        return response()->json($loans->With(['book', 'user'])->get());
+        return response()->json($loans->with(['book', 'user'])->get());
     }
 
     // Petugas/Admin Update Status Peminjaman

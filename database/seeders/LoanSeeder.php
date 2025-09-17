@@ -35,7 +35,7 @@ class LoanSeeder extends Seeder
                     'id_user' => $user->id_user,
                     'id_book' => $book->id_book,
                     'tanggal_peminjaman' => $loanDate,
-                    'due_date' => $loanDate->copy()->addDays(1,7),
+                    'due_date' => $loanDate->copy()->addDays(7),
                     'status_peminjaman' => 'dipinjam',
                 ]);
                 $book->decrement('stock');

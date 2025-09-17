@@ -75,7 +75,7 @@ Route::middleware('auth:sanctum', 'role:petugas')->prefix('petugas')->group(func
     // Loans Routes
     Route::get('/loans', [LoanController::class, 'index']);
     Route::put('/loans/{loan}/validate', [LoanController::class, 'validateLoan']);
-    Route::post('/loan/{loan}/reject', [LoanController::class, 'rejectLoan']);
+    Route::post('/loan/{loan}/reject', [LoanController::class, 'rejectionLoan']);
     Route::put('/loans/{loan}/pickup', [LoanController::class, 'pickupConfirmation']);
     Route::put('/loans/{loan}/return', [LoanController::class, 'returnBook']);
     Route::get('/reports/loans', [ReportController::class, 'generateLoanReport']);
