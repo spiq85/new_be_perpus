@@ -88,6 +88,11 @@ Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
+    // Chart Endpoints
+    Route::get("/dashboard/user-growth", [DashboardController::class, 'userGrowth']);
+    Route::get('/dashboard/top-books', [DashboardController::class, 'topBooks']);
+    Route::get('/dashboard/top-users', [DashboardController::class, 'topUsers']);
+
     // Laons Routes
     Route::get('/loans', [LoanController::class, 'index']);
 
