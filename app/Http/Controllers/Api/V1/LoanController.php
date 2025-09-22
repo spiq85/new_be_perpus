@@ -105,22 +105,33 @@ class LoanController extends Controller
     }
 
     // Petugas/Admin Update Status Peminjaman
-    public function validateLoan(Loan $loan)
+    public function validateLoan(Loan $loan, Request $request)
     {
-      if ($loan->status_peminjaman !== 'pending'){
+        $request->validate([
+            'status' => "required|in:siap_diambil,ditolak,dipinjam"
+        ]);
+
+        if ($loan->status_peminjaman !== 'pending') {
+            return response()->json([
+                'message' => 'Peminjaman ini sudah divalidasi atau sudah selesai'
+            ], 422);
+        }
+
+        $loan->update([
+            'status_peminjaman' => $request->status
+        ]);
+
+        if ($request->status === 'siap_diambil') {
+            // Event Notif siap_diambil
+        }
+
+        if ($request->status === "ditolak") {
+            // Event Notif ditolak
+        }
+
         return response()->json([
-            'message' => 'Peminjaman ini sudah divalidasi atau selesai.'
-        ],422);
-      }
-
-
-      $loan->update([
-        'status_peminjaman' => 'siap_diambil',
-      ]);
-      
-    //   UserHasBookReadyForPickup::dispatch($loan);
-    return response()->json([
-        'message' => 'Peminjaman berhasil divalidasi. Buku siap diambil.', 'data' => $loan
+            'message' => "Peminjman ini berhasil diubah ke status {$request->status}",
+            'data' => $loan
         ]);
     }
 

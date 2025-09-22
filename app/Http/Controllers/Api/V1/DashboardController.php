@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Book;
 use App\Models\Loan;
+use App\Models\Category;
 
 class DashboardController extends Controller
 {
@@ -70,19 +71,20 @@ class DashboardController extends Controller
             });
 
         // Distribusi Kategori Buku
-        $categoryDistribution = Book::selectRaw('categories.name, COUNT(books.id_book) as total')
-            ->join('categories', 'books.id_category', '=', 'categories.id_category')
-            ->groupBy('categories.name')
+        $categoryDistribution = \DB::table('book_category')
+            ->join('books', 'book_category.id_book', '=', 'books.id_book')
+            ->join('categories', 'book_category.id_category', '=', 'categories.id_category')
+            ->select('categories.category_name', \DB::raw('COUNT(books.id_book) as total'))
+            ->groupBy('categories.category_name')
             ->get()
-            ->map(function ($item) {
-                return [
-                    'name' => $item->name,
-                    'value' => $item->total,
-                    'color' => '#' . substr(md5($item->name), 0, 6),
-                ];
-            });
+            ->map(fn($item) => [
+                'name' => $item->category_name,
+                'value' => $item->total,
+                'color' => '#' . substr(md5($item->category_name), 0, 6),
+            ]);
 
-        // Aktivitas Harian (by day name)
+            
+                // Aktivitas Harian (by day name)
         $dailyActivity = Loan::selectRaw('DAYNAME(tanggal_peminjaman) as day, COUNT(*) as total')
             ->whereYear('tanggal_peminjaman', now()->year)
             ->groupBy('day')

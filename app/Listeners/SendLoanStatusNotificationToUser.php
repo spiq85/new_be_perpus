@@ -2,12 +2,12 @@
 
 namespace App\Listeners;
 
-use App\Events\LoanRequested;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use App\Events\LoanStatusUpdated;
 use Illuminate\Support\Facades\Log;
 
-class SendLoanNotificationToStaff
+class SendLoanStatusNotificationToUser
 {
     /**
      * Create the event listener.
@@ -20,13 +20,9 @@ class SendLoanNotificationToStaff
     /**
      * Handle the event.
      */
-
-    public function handle(LoanRequested $event): void
+    public function handle(LoanStatusUpdated $event): void
     {
         $loan = $event->loan;
-        $user = $loan->user;
-        $book = $loan->book;
-
-        Log::info("Notifikasi untuk Petugas : User '{$user->username}' mengajukan peminjaman buku '{$book->title}'.");
+        Log::info("Notif untuk User {$loan->user->username} : status peminjman '{$loan->book->title} berubah jadi {$loan->status_peminjaman}");
     }
 }
