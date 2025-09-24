@@ -26,7 +26,8 @@ class LandingPageController extends Controller
                     'id' => $book->id_book,
                     'title' => $book->title,
                     'author' => $book->author,
-                    'cover' => $book->getFirstMediaUrl('cover') ?? null,
+                    'cover' => $book->getFirstMediaUrl('cover') ?:
+                    'https://via.placeholder.com/400x600?text=No+Cover' ,
                     'genres' => $book->categories->pluck('category_name'),
                     'available' => $book->stock > 0,
                     'description' => $book->description,
