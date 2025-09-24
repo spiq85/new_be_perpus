@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\ReviewReportController;
 use App\Http\Controllers\Api\V1\ForgotPasswordController;
+use App\Http\Controllers\LandingPageController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +26,8 @@ use App\Http\Controllers\Api\V1\ForgotPasswordController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+Route::get('/landing', [LandingPageController::class, 'index']);
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
