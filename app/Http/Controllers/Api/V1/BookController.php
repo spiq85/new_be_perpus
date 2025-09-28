@@ -82,8 +82,8 @@ class BookController extends Controller
             'title', 'author', 'publisher', 'publish_year', 'stock', 'description'
         ]));
         
-        if ($request->hasFile('image')) {
-            $book->addMedia($request->file('image'))->toMediaCollection('cover');
+        if ($request->hasFile('cover')) {
+            $book->addMedia($request->file('cover'))->toMediaCollection('cover');
         }
 
         return response()->json([
