@@ -18,6 +18,16 @@ class Loan extends Model
         'tanggal_peminjaman',
         'tanggal_pengembalian',
         'status_peminjaman',
+        'due_date',
+        'denda',
+        'requested_return_condition',
+        'return_note',
+    ];
+
+    protected $casts = [
+        'tanggal_peminjaman' =>'datetime',
+        'due_date' => 'datetime',
+        'tanggal_pengembalian' => 'datetime',
     ];
 
     public function user()

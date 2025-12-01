@@ -25,7 +25,8 @@ class Book extends Model implements HasMedia
 
     public function categories()
     {
-        return $this->belongsToMany(Category::class, 'book_category', 'id_book', 'id_category');
+        return $this->belongsToMany(Category::class, 'book_category', 'id_book', 'id_category')
+            ->withTimestamps();
     }
 
     public function loans()

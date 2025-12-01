@@ -6,17 +6,31 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Book;
 use App\Models\Review;
+use App\Models\Loan;
 use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
     // Menyimpan ulasan & rating sebuah buku
-    public function store(Request $request, Book $book)
+    public function store(Request $request, Book $book,)
     {
+        $user = Auth::user();
+
         $request->validate([
             'review' => 'required|string',
             'rating' => 'required|integer|between:1,5',
         ]);
+
+        $hasReturned = $user->loans()
+            ->where('id_book', $book->id_book)
+            ->where('status_peminjaman', 'dikembalikan')
+            ->exists();
+
+            if(!$hasReturned) {
+                return response()->json([
+                    'message' => 'Anda hanya dapat memberikan ulasan setelah mengembalikan buku ini.'
+                ], 422);
+            }
 
         $review = Review::updateOrCreate(
             [
@@ -29,7 +43,8 @@ class ReviewController extends Controller
             ]
         );
         return response()->json([
-            'message' => 'Ulasan berhasil disimpan.' , 'data' => $review
+            'message' => 'Ulasan berhasil disimpan.' , 
+            'data' => $review
         ],201);
     }
 

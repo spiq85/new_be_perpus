@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\ReviewReportController;
 use App\Http\Controllers\Api\V1\ForgotPasswordController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\LandingPageController;
 
 
@@ -26,7 +27,7 @@ use App\Http\Controllers\LandingPageController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
+    
 Route::get('/landing', [LandingPageController::class, 'index']);
 
 // Public Routes
@@ -54,6 +55,11 @@ Route::middleware('auth:sanctum',)->group(function(){
     // Loans Routes
     Route::post('/loans', [LoanController::class, 'store']);
     Route::get('/my-loans', [LoanController::class, 'myLoans']);
+    Route::put('/loans/{loan}/pickup', [LoanController::class, 'pickupConfirmation']);
+    Route::put('/loans/{loan}/return-request', [LoanController::class, 'requestReturn']);
+
+    // Notifications Routes
+    Route::get('/notifications', [NotificationController::class, 'index']);
 
     // Routes Review
     Route::post('/reviews/{book}', [ReviewController::class, 'store']);
@@ -69,7 +75,7 @@ Route::middleware('auth:sanctum',)->group(function(){
     // Routes Dashboard Dibedakan Rolenya Melalui Login
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
-
+    
 // Officer Routes
 Route::middleware('auth:sanctum', 'role:petugas')->prefix('petugas')->group(function (){
 
@@ -79,9 +85,9 @@ Route::middleware('auth:sanctum', 'role:petugas')->prefix('petugas')->group(func
     // Loans Routes
     Route::get('/loans', [LoanController::class, 'index']);
     Route::put('/loans/{loan}/validate', [LoanController::class, 'validateLoan']);
-    Route::post('/loan/{loan}/reject', [LoanController::class, 'rejectionLoan']);
-    Route::put('/loans/{loan}/pickup', [LoanController::class, 'pickupConfirmation']);
-    Route::put('/loans/{loan}/return', [LoanController::class, 'returnBook']);
+    Route::put('loans/{loan}/finalize-return', [LoanController::class, 'finalizeReturn']);
+
+    // Generate Laporan Peminjaman dan Denda
     Route::get('/reports/loans', [ReportController::class, 'generateLoanReport']);
     Route::get('/reports/fines', [ReportController::class, 'generateFineReport']);
 });

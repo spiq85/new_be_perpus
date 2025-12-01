@@ -11,6 +11,7 @@ class Category extends Model
 
     protected $table = 'categories';
     protected $primaryKey = 'id_category';
+    public $timestamps = false;
 
     protected $fillable = [
         'category_name',
@@ -19,6 +20,7 @@ class Category extends Model
 
     public function books()
     {
-        return $this->belongsToMany(Book::class, 'book_category', 'id_category', 'id_book');
+        return $this->belongsToMany(Book::class, 'book_category', 'id_category', 'id_book')
+            ->withTimestamps();
     }
 }
