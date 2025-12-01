@@ -39,4 +39,10 @@ class Loan extends Model
     {
         return $this->belongsTo(Book::class, 'id_book', 'id_book');
     }
+
+    public function review()
+    {
+        return $this->hasOne(\App\Models\Review::class, 'id_book', 'id_book')
+                    ->where('id_user', $this->id_user);
+    }
 }

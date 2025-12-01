@@ -14,12 +14,6 @@ use App\Events\LoanStatusUpdated;
 
 class LoanController extends Controller
 {
-    /**
-     * NOTE:
-     * Stok buku DIKELOLA di controller dengan transaksi & row lock.
-     * Pastikan tidak ada trigger DB yang juga mengubah stok agar tidak double.
-     */
-
     // =========================
     // USER AJUKAN PEMINJAMAN
     // =========================
@@ -54,12 +48,12 @@ class LoanController extends Controller
     }
 
     // =========================
-    // USER LIHAT RIWAYATNYA
+    // USER LIHAT RIWAYATNYA + REVIEW SUDAH IKUT!
     // =========================
     public function myLoans(Request $request)
     {
         $loans = Loan::where('id_user', Auth::id())
-            ->with(['book', 'user'])
+            ->with(['book', 'user', 'review']) // TAMBAHIN 'review' DI SINI!
             ->latest();
 
         if ($request->filled('search')) {
@@ -82,15 +76,25 @@ class LoanController extends Controller
                     'requested_return_condition'  => $loan->requested_return_condition,
                     'return_note'                 => $loan->return_note,
                     'book' => [
-                        'id'     => $loan->book->id_book,
-                        'title'  => $loan->book->title,
-                        'cover'  => $loan->book->getFirstMediaUrl('cover'),
+                        'id_book' => $loan->book->id_book,
+                        'title'   => $loan->book->title,
+                        'author'  => $loan->book->author ?? 'Tidak diketahui',
+                        'cover'   => $loan->book->getFirstMediaUrl('cover') 
+                                    ?? "https://via.placeholder.com/200x300?text=No+Cover",
                     ],
                     'user' => [
-                        'id'            => $loan->user->id_user,
-                        'username'      => $loan->user->username,
-                        'nama_lengkap'  => $loan->user->nama_lengkap,
+                        'id_user'      => $loan->user->id_user,
+                        'username'     => $loan->user->username,
+                        'nama_lengkap' => $loan->user->nama_lengkap,
                     ],
+                    // INI YANG BIKIN TAB ULASAN LANGSUNG MUNCUL!!!
+                    'review' => $loan->review ? [
+                        'id_review' => $loan->review->id_review,
+                        'rating'    => (int) $loan->review->rating,
+                        'review'    => $loan->review->review ?? null,
+                        'created_at'=> $loan->review->created_at,
+                        'updated_at'=> $loan->review->updated_at,
+                    ] : null,
                 ];
             })
         );
@@ -101,7 +105,7 @@ class LoanController extends Controller
     // =========================
     public function index(Request $request)
     {
-        $loans = Loan::with(['book', 'user'])->latest();
+        $loans = Loan::with(['book', 'user', 'review'])->latest();
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -133,13 +137,20 @@ class LoanController extends Controller
                     'book' => [
                         'id_book' => $loan->book->id_book,
                         'title'   => $loan->book->title,
-                        'cover'   => $loan->book->getFirstMediaUrl('cover'),
+                        'author'  => $loan->book->author ?? 'Tidak diketahui',
+                        'cover'   => $loan->book->getFirstMediaUrl('cover') 
+                                    ?? "https://via.placeholder.com/200x300?text=No+Cover",
                     ],
                     'user' => [
                         'id_user'      => $loan->user->id_user,
                         'username'     => $loan->user->username,
                         'nama_lengkap' => $loan->user->nama_lengkap,
                     ],
+                    'review' => $loan->review ? [
+                        'id_review' => $loan->review->id_review,
+                        'rating'    => (int) $loan->review->rating,
+                        'review'    => $loan->review->review,
+                    ] : null,
                 ];
             })
         );
@@ -147,7 +158,6 @@ class LoanController extends Controller
 
     // =========================
     // PETUGAS VALIDASI PENGAJUAN PINJAM
-    // (pending -> siap_diambil | ditolak)
     // =========================
     public function validateLoan(Loan $loan, Request $request)
     {
@@ -160,7 +170,6 @@ class LoanController extends Controller
         }
 
         $loan->update(['status_peminjaman' => $request->status]);
-
         $loan->load(['book', 'user']);
         LoanStatusUpdated::dispatch($loan);
 
@@ -172,7 +181,6 @@ class LoanController extends Controller
 
     // =========================
     // USER KONFIRMASI AMBIL BUKU
-    // (siap_diambil -> dipinjam)
     // =========================
     public function pickupConfirmation(Loan $loan)
     {
@@ -184,16 +192,11 @@ class LoanController extends Controller
             return response()->json(['message' => 'Buku ini belum siap diambil atau sudah dipinjam.'], 422);
         }
 
-        // Transaksi + row lock
         DB::beginTransaction();
         try {
             $book = Book::where('id_book', $loan->id_book)->lockForUpdate()->first();
 
-            if (!$book) {
-                DB::rollBack();
-                return response()->json(['message' => 'Buku tidak ditemukan.'], 404);
-            }
-            if ($book->stock < 1) {
+            if (!$book || $book->stock < 1) {
                 DB::rollBack();
                 return response()->json(['message' => 'Stok buku tidak tersedia.'], 422);
             }
@@ -204,6 +207,7 @@ class LoanController extends Controller
                 'due_date'            => now()->addDays(7),
             ]);
 
+            $book->decrement('stock');
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -221,7 +225,6 @@ class LoanController extends Controller
 
     // =========================
     // USER AJUKAN PENGEMBALIAN
-    // (dipinjam -> menunggu_validasi_pengembalian)
     // =========================
     public function requestReturn(Request $request, Loan $loan)
     {
@@ -255,7 +258,6 @@ class LoanController extends Controller
 
     // =========================
     // PETUGAS FINALISASI PENGEMBALIAN
-    // (menunggu_validasi_pengembalian -> dikembalikan|rusak|hilang)
     // =========================
     public function finalizeReturn(Request $request, Loan $loan)
     {
@@ -273,10 +275,15 @@ class LoanController extends Controller
             default  => 'dikembalikan',
         };
 
-            $loan->update([
-                'status_peminjaman'    => $finalStatus,
-                'tanggal_pengembalian' => now(),
-            ]);
+        $loan->update([
+            'status_peminjaman'    => $finalStatus,
+            'tanggal_pengembalian' => now(),
+        ]);
+
+        // Kembalikan stok jika bukan hilang/rusak parah
+        if ($finalStatus === 'dikembalikan') {
+            Book::where('id_book', $loan->id_book)->increment('stock');
+        }
 
         $loan->load(['book', 'user']);
         LoanStatusUpdated::dispatch($loan);
