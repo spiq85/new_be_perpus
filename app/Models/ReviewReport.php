@@ -10,11 +10,13 @@ class ReviewReport extends Model
     use HasFactory;
 
     protected $table = 'review_reports';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
         'id_review',
         'id_user',
         'reason',
+        'reported_at',
     ];
 
     public function review()

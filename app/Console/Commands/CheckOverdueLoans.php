@@ -21,7 +21,7 @@ class CheckOverdueLoans extends Command
             ->where('due_date', '<', $today)
             ->get();
 
-        foreach ($Loans as $loan) {
+        foreach ($loans as $loan) {
             $overdueDays = $today->diffInDays(Carbon::parse($loan->due_date));
             $finePerDay = 5000; // Denda Jika Telat Per Hari
             $fine = $overdueDays * $finePerDay;
@@ -39,7 +39,7 @@ class CheckOverdueLoans extends Command
             $loan->denda = $fine;
             $loan->save();
 
-            $this->info("User #{$loan->id_user} telat/hilang/rusak buku #{$loan->id_book}. Denda: Rp {$fine}");
+            $this->info("User #{$loan->user->username} #{$loan->status_peminjaman} #{$loan->book->title}. Denda: Rp {$fine}");
         }
         $this->info("Pengecekan Selesai."); 
     }

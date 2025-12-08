@@ -7,7 +7,12 @@ use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use App\Events\LoanRequested;
+use App\Events\LoanStatusUpdated;
+use App\Events\ReviewReportCreated;
 use App\Listeners\SendLoanNotificationToStaff;
+use App\Listeners\SendLoanStatusNotificationToUser;
+use App\Listeners\NotifyAdminAboutReportedReview;
+use App\Listeners\SendReturnRequestNotificationToStaff;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -21,7 +26,14 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         LoanRequested::class => [
-            SendLoanNotificationToStaff::class
+            SendLoanNotificationToStaff::class,
+        ],
+        LoanStatusUpdated::class => [
+            SendLoanStatusNotificationToUser::class,
+            SendReturnRequestNotificationToStaff::class
+        ],
+        ReviewReportCreated::class => [
+            NotifyAdminAboutReportedReview::class
         ],
     ];
 

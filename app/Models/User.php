@@ -23,6 +23,12 @@ class User extends Authenticatable
 
     protected $primaryKey = 'id_user';
 
+    public $incremenitng = true;
+
+    protected $keyType = 'int';
+
+    protected $dates = ['banned_at'];
+
     protected $fillable = [
         'username',
         'email',
@@ -50,6 +56,11 @@ class User extends Authenticatable
     public function reviewReports()
     {
         return $this->hasMany(ReviewReport::class, 'id_user', 'id_user');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'id_user', 'id_user');
     }
 
     /**

@@ -21,8 +21,8 @@ class BookController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('author', 'like', "%{$search}%")
-                  ->orWhere('publisher', 'like', "%{$search}%");
+                    ->orWhere('author', 'like', "%{$search}%")
+                    ->orWhere('publisher', 'like', "%{$search}%");
             });
         }
 
@@ -43,8 +43,8 @@ class BookController extends Controller
                     'category_name'  => $c->category_name,
                 ]),
                 // INI YANG BARU: rating & jumlah ulasan
-                'reviews_avg_rating' => $book->reviews_avg_rating 
-                    ? round((float)$book->reviews_avg_rating, 1) 
+                'reviews_avg_rating' => $book->reviews_avg_rating
+                    ? round((float)$book->reviews_avg_rating, 1)
                     : 0.0,
                 'reviews_count'      => $book->reviews_count ?? 0,
             ];
@@ -56,9 +56,13 @@ class BookController extends Controller
     // DETAIL BUKU SPESIFIK (juga include rating)
     public function show(Book $book)
     {
-        $book->load(['categories'])
-             ->loadAvg('reviews', 'rating')
-             ->loadCount('reviews');
+        $book->load([
+            'categories',
+            'media',
+            'reviews.user:id_user,username'
+        ])
+            ->loadAvg('reviews', 'rating')
+            ->loadCount('reviews');
 
         return response()->json([
             'id_book'            => $book->id_book,
@@ -73,48 +77,23 @@ class BookController extends Controller
                 'id'             => $c->id_category,
                 'category_name'  => $c->category_name,
             ]),
-            'reviews_avg_rating' => $book->reviews_avg_rating 
-                ? round((float)$book->reviews_avg_rating, 1) 
+            'reviews_avg_rating' => $book->reviews_avg_rating
+                ? round((float)$book->reviews_avg_rating, 1)
                 : 0.0,
             'reviews_count'      => $book->reviews_count ?? 0,
+
+            // 👇 INI YANG PALING PENTING
+            'reviews'            => $book->reviews->map(fn($r) => [
+                'id_review' => $r->id_review,
+                'rating'    => $r->rating,
+                'review'    => $r->review,
+                'user'      => [
+                    'id_user'  => $r->user->id_user ?? null,
+                    'name'     => $r->user->name ?? null,
+                    'username' => $r->user->username ?? null,
+                ]
+            ]),
         ]);
-    }
-
-    // TAMBAH BUKU (Admin)
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title'        => 'required|string|max:255',
-            'author'       => 'required|string|max:255',
-            'publisher'    => 'required|string|max:255',
-            'publish_year' => 'required|integer|min:1900|max:' . (date('Y') + 5),
-            'stock'        => 'required|integer|min:0',
-            'description'  => 'required|string',
-            'categories'   => 'nullable|array',
-            'categories.*' => 'integer|exists:categories,id_category',
-            'cover'        => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
-        ]);
-
-        $categoryIds = collect($request->categories ?? [])->map(fn($v) => (int)$v)->filter()->values()->all();
-
-        $book = DB::transaction(function () use ($request, $validated, $categoryIds) {
-            $book = Book::create($validated);
-            
-            if ($request->hasFile('cover')) {
-                $book->addMediaFromRequest('cover')->toMediaCollection('cover');
-            }
-
-            if (!empty($categoryIds)) {
-                $book->categories()->sync($categoryIds);
-            }
-
-            return $book->load('categories');
-        });
-
-        return response()->json([
-            'message' => 'Buku berhasil ditambahkan',
-            'data'    => $this->formatBookResponse($book)
-        ], 201);
     }
 
     // UPDATE BUKU (Admin)
@@ -133,7 +112,12 @@ class BookController extends Controller
         ]);
 
         $book->update($request->only([
-            'title', 'author', 'publisher', 'publish_year', 'stock', 'description'
+            'title',
+            'author',
+            'publisher',
+            'publish_year',
+            'stock',
+            'description'
         ]));
 
         if ($request->hasFile('cover')) {
@@ -183,8 +167,8 @@ class BookController extends Controller
                 'id'             => $c->id_category,
                 'category_name'  => $c->category_name,
             ]),
-            'reviews_avg_rating' => $book->reviews_avg_rating 
-                ? round((float)$book->reviews_avg_rating, 1) 
+            'reviews_avg_rating' => $book->reviews_avg_rating
+                ? round((float)$book->reviews_avg_rating, 1)
                 : 0.0,
             'reviews_count'      => $book->reviews_count ?? 0,
         ];

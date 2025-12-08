@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Loan;
 use App\Models\Book;
+use App\Models\Review;
 use App\Events\LoanRequested;
 use App\Events\LoanStatusUpdated;
 
@@ -53,47 +54,37 @@ class LoanController extends Controller
     public function myLoans(Request $request)
     {
         $loans = Loan::where('id_user', Auth::id())
-            ->with(['book', 'user', 'review']) // TAMBAHIN 'review' DI SINI!
-            ->latest();
+            ->with(['book', 'user'])
+            ->latest()
+            ->get();
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $loans->whereHas('book', fn ($q) => $q->where('title', 'like', "%{$search}%"));
-        }
-
-        if ($request->filled('status') && $request->status !== 'all') {
-            $loans->where('status_peminjaman', $request->status);
+        // load review manual karena eager-load hasOne dengan 2 FK tidak bisa
+        foreach ($loans as $loan) {
+            $loan->review = Review::where('id_user', $loan->id_user)
+                ->where('id_book', $loan->id_book)
+                ->first();
         }
 
         return response()->json(
-            $loans->get()->map(function ($loan) {
+            $loans->map(function ($loan) {
                 return [
-                    'id_loan'                     => $loan->id_loan,
-                    'status'                      => $loan->status_peminjaman,
-                    'tanggal_peminjaman'          => $loan->tanggal_peminjaman,
-                    'tanggal_pengembalian'        => $loan->tanggal_pengembalian,
-                    'due_date'                    => $loan->due_date,
-                    'requested_return_condition'  => $loan->requested_return_condition,
-                    'return_note'                 => $loan->return_note,
+                    'id_loan' => $loan->id_loan,
+                    'status' => $loan->status_peminjaman,
+                    'tanggal_peminjaman' => $loan->tanggal_peminjaman,
+                    'tanggal_pengembalian' => $loan->tanggal_pengembalian,
+                    'due_date' => $loan->due_date,
+
                     'book' => [
                         'id_book' => $loan->book->id_book,
                         'title'   => $loan->book->title,
-                        'author'  => $loan->book->author ?? 'Tidak diketahui',
-                        'cover'   => $loan->book->getFirstMediaUrl('cover') 
-                                    ?? "https://via.placeholder.com/200x300?text=No+Cover",
+                        'author'  => $loan->book->author,
+                        'cover'   => $loan->book->getFirstMediaUrl('cover'),
                     ],
-                    'user' => [
-                        'id_user'      => $loan->user->id_user,
-                        'username'     => $loan->user->username,
-                        'nama_lengkap' => $loan->user->nama_lengkap,
-                    ],
-                    // INI YANG BIKIN TAB ULASAN LANGSUNG MUNCUL!!!
+
                     'review' => $loan->review ? [
                         'id_review' => $loan->review->id_review,
-                        'rating'    => (int) $loan->review->rating,
-                        'review'    => $loan->review->review ?? null,
-                        'created_at'=> $loan->review->created_at,
-                        'updated_at'=> $loan->review->updated_at,
+                        'rating'    => $loan->review->rating,
+                        'review'    => $loan->review->review,
                     ] : null,
                 ];
             })
@@ -112,7 +103,7 @@ class LoanController extends Controller
             $loans->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($q2) use ($search) {
                     $q2->where('username', 'like', "%{$search}%")
-                       ->orWhere('nama_lengkap', 'like', "%{$search}%");
+                        ->orWhere('nama_lengkap', 'like', "%{$search}%");
                 })->orWhereHas('book', function ($q2) use ($search) {
                     $q2->where('title', 'like', "%{$search}%");
                 });
@@ -138,8 +129,8 @@ class LoanController extends Controller
                         'id_book' => $loan->book->id_book,
                         'title'   => $loan->book->title,
                         'author'  => $loan->book->author ?? 'Tidak diketahui',
-                        'cover'   => $loan->book->getFirstMediaUrl('cover') 
-                                    ?? "https://via.placeholder.com/200x300?text=No+Cover",
+                        'cover'   => $loan->book->getFirstMediaUrl('cover')
+                            ?? "https://via.placeholder.com/200x300?text=No+Cover",
                     ],
                     'user' => [
                         'id_user'      => $loan->user->id_user,
@@ -207,7 +198,6 @@ class LoanController extends Controller
                 'due_date'            => now()->addDays(7),
             ]);
 
-            $book->decrement('stock');
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -279,11 +269,6 @@ class LoanController extends Controller
             'status_peminjaman'    => $finalStatus,
             'tanggal_pengembalian' => now(),
         ]);
-
-        // Kembalikan stok jika bukan hilang/rusak parah
-        if ($finalStatus === 'dikembalikan') {
-            Book::where('id_book', $loan->id_book)->increment('stock');
-        }
 
         $loan->load(['book', 'user']);
         LoanStatusUpdated::dispatch($loan);

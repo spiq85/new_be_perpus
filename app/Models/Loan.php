@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Events\LoanStatusUpdated;
 
 class Loan extends Model
 {
@@ -25,9 +26,13 @@ class Loan extends Model
     ];
 
     protected $casts = [
-        'tanggal_peminjaman' =>'datetime',
+        'tanggal_peminjaman' => 'datetime',
         'due_date' => 'datetime',
         'tanggal_pengembalian' => 'datetime',
+    ];
+
+    protected $dispatchesEvents = [
+        'updated' => LoanStatusUpdated::class,
     ];
 
     public function user()
@@ -42,7 +47,7 @@ class Loan extends Model
 
     public function review()
     {
-        return $this->hasOne(\App\Models\Review::class, 'id_book', 'id_book')
-                    ->where('id_user', $this->id_user);
+        return $this->hasOne(Review::class, 'id_book', 'id_book')
+            ->where('id_user', $this->id_user);
     }
 }

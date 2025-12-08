@@ -20,6 +20,7 @@ return new class extends Migration
             ->constrained('users', 'id_user')
             ->onDelete('cascade');
             $table->text('reason')->nullable();
+            $table->date('reported_at');
             $table->timestamps();
         });
     }

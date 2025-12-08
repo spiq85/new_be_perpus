@@ -15,7 +15,7 @@ use App\Http\Controllers\Api\V1\ReviewReportController;
 use App\Http\Controllers\Api\V1\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\LandingPageController;
-
+use App\Http\Controllers\Api\V1\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +48,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request){
 Route::middleware('auth:sanctum',)->group(function(){
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    // Profile Routes
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile/change-password', [ProfileController::class, 'changePassword']);
+
     // Books Routes
     Route::get('books',[BookController::class, 'index']);
     Route::get('books/{book}', [BookController::class, 'show']);
@@ -60,6 +64,9 @@ Route::middleware('auth:sanctum',)->group(function(){
 
     // Notifications Routes
     Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::put('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
 
     // Routes Review
     Route::post('/reviews/{book}', [ReviewController::class, 'store']);
@@ -75,7 +82,8 @@ Route::middleware('auth:sanctum',)->group(function(){
     // Routes Dashboard Dibedakan Rolenya Melalui Login
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
-    
+
+
 // Officer Routes
 Route::middleware('auth:sanctum', 'role:petugas')->prefix('petugas')->group(function (){
 
@@ -90,6 +98,9 @@ Route::middleware('auth:sanctum', 'role:petugas')->prefix('petugas')->group(func
     // Generate Laporan Peminjaman dan Denda
     Route::get('/reports/loans', [ReportController::class, 'generateLoanReport']);
     Route::get('/reports/fines', [ReportController::class, 'generateFineReport']);
+
+    Route::get('/notifications', [NotificationController::class, 'staffIndex']);
+    Route::put('/notifications/{notification}/read', [NotificationController::class, 'adminMarkAsRead']);
 });
 
 // Admin Routes 
@@ -126,8 +137,17 @@ Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function
     Route::put('/users/{user}/ban', [UserController::class, 'ban']);
     Route::put('/users/{user}/unban', [UserController::class, 'unban']);
 
+    // Manage Reviews
+    Route::get('/review-reports', [ReviewReportController::class, 'index']);
+    Route::delete('/review-reports/{report}',[ReviewReportController::class, 'destroy']);
+    Route::delete('/reviews/{review}', [ReviewReportController::class, 'deleteReview']);
+
     // Generate Laporan Buku
     Route::get('/reports/books', [ReportController::class, 'generateBookReport']);
     Route::get('/reports/books/popular', [ReportController::class, 'generatePopularBooksReport']);
     Route::get('/reports/books/category-stats', [ReportController::class, 'generateCategoryStatsReport']);
+
+    // Notification
+   Route::get('/notifications', [NotificationController::class, 'adminIndex']);
+   Route::put('/notifications/{notification}/read', [NotificationController::class, 'adminMarkAsRead']);
 });
