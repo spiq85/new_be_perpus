@@ -1,10 +1,14 @@
-<h1>Laporan Buku ({{ ucfirst($status ?? 'Semua') }})</h1>
-<p>Tanggal cetak: {{ $date }}</p>
+@extends('layouts.pdf', [
+    'title' => 'Laporan Inventori Buku',
+    'subtitle' => ucfirst($status ?? 'Semua Buku')
+])
 
-<table border="1" cellspacing="0" cellpadding="6" width="100%">
+@section('content')
+<table>
     <thead>
         <tr>
-            <th>Judul</th>
+            <th>No</th>
+            <th>Judul Buku</th>
             <th>Penulis</th>
             <th>Kategori</th>
             <th>Stok</th>
@@ -12,20 +16,28 @@
         </tr>
     </thead>
     <tbody>
-        @foreach($books as $book)
+        @forelse($books as $i => $book)
         <tr>
-            <td>{{ $book->title }}</td>
-            <td>{{ $book->author }}</td>
+            <td class="text-center font-bold">{{ $i + 1 }}</td>
+            <td class="font-bold">{{ $book->title }}</td>
+            <td>{{ $book->author ?? '-' }}</td>
             <td>
                 @if($book->categories->isNotEmpty())
                     {{ $book->categories->pluck('category_name')->join(', ') }}
                 @else
-                    -
+                    <em>-</em>
                 @endif
             </td>
-            <td>{{ $book->stock }}</td>
-            <td>{{ $book->loans_count }}</td>
+            <td class="text-center font-bold {{ $book->stock == 0 ? 'text-red-600' : 'text-green-600' }}">
+                {{ $book->stock }}
+            </td>
+            <td class="text-center font-bold text-indigo-600">{{ $book->loans_count }}</td>
         </tr>
-        @endforeach
+        @empty
+        <tr>
+            <td colspan="6" class="text-center">Tidak ada data buku</td>
+        </tr>
+        @endforelse
     </tbody>
 </table>
+@endsection

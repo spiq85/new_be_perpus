@@ -12,7 +12,6 @@ use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\ReviewReportController;
-use App\Http\Controllers\Api\V1\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\Api\V1\ProfileController;
@@ -35,10 +34,6 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/books', [BookController::class, 'index']);
 Route::get('/books/{book}', [BookController::class, 'show']);
-
-// Forgot Password
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
-Route::post('/reset-password', [ForgotPasswordController::class, 'reset']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request){
     return $request->user();
@@ -144,10 +139,13 @@ Route::middleware('auth:sanctum', 'role:admin')->prefix('admin')->group(function
     Route::delete('/review-reports/{report}',[ReviewReportController::class, 'destroy']);
     Route::delete('/reviews/{review}', [ReviewReportController::class, 'deleteReview']);
 
-    // Generate Laporan Buku
+    // Generate Laporan 
+    Route::get('/reports/loans', [ReportController::class, 'generateLoanReport']);
+    Route::get('/reports/fines', [ReportController::class, 'generateFineReport']);
     Route::get('/reports/books', [ReportController::class, 'generateBookReport']);
     Route::get('/reports/books/popular', [ReportController::class, 'generatePopularBooksReport']);
     Route::get('/reports/books/category-stats', [ReportController::class, 'generateCategoryStatsReport']);
+
 
     // Notification
    Route::get('/notifications', [NotificationController::class, 'adminIndex']);

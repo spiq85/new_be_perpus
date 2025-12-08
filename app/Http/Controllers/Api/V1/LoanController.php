@@ -73,6 +73,7 @@ class LoanController extends Controller
                     'tanggal_peminjaman' => $loan->tanggal_peminjaman,
                     'tanggal_pengembalian' => $loan->tanggal_pengembalian,
                     'due_date' => $loan->due_date,
+                    'denda' => $loan->denda,
 
                     'book' => [
                         'id_book' => $loan->book->id_book,

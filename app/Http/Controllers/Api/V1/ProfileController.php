@@ -66,6 +66,7 @@ class ProfileController extends Controller
 
         // Frontend kirim { name, email }
         $validated = $request->validate([
+            'username' => ['nullable', 'string', 'max:255'],
             'name'  => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
@@ -77,6 +78,7 @@ class ProfileController extends Controller
 
         $user->nama_lengkap = $validated['name'];
         $user->email        = $validated['email'];
+        $user->username    = $validated['username'] ?? $user->username;
         $user->save();
 
         return response()->json([
