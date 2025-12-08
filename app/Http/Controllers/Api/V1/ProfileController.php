@@ -16,7 +16,8 @@ use App\Models\Review;
 class ProfileController extends Controller
 {
     /**
-     * Display user profile with stats
+     * Tampilkan profil user + statistik
+     * GET /api/profile
      */
     public function show()
     {
@@ -27,24 +28,24 @@ class ProfileController extends Controller
         }
 
         // Hitung stats
-        $totalDenda = Loan::where('id_user', $user->id_user)->sum('denda');
-        $totalPinjam = Loan::where('id_user', $user->id_user)->count();
+        $totalDenda      = Loan::where('id_user', $user->id_user)->sum('denda');
+        $totalPinjam     = Loan::where('id_user', $user->id_user)->count();
         $totalCollection = Collection::where('id_user', $user->id_user)->count();
-        $totalReview = Review::where('id_user', $user->id_user)->count();
+        $totalReview     = Review::where('id_user', $user->id_user)->count();
 
         $profile = [
-            'id_user' => $user->id_user,
-            'username' => $user->username,
-            'email' => $user->email,
+            'id_user'      => $user->id_user,
+            'username'     => $user->username,
+            'email'        => $user->email,
             'nama_lengkap' => $user->nama_lengkap,
-            'alamat' => $user->alamat,
-            'role' => $user->role,
-            'banned_at' => $user->banned_at,
-            'stats' => [
-                'total_denda' => $totalDenda,
-                'total_pinjam' => $totalPinjam,
+            'alamat'       => $user->alamat,
+            'role'         => $user->role,
+            'banned_at'    => $user->banned_at,
+            'stats'        => [
+                'total_denda'      => $totalDenda,
+                'total_pinjam'     => $totalPinjam,
                 'total_collection' => $totalCollection,
-                'total_review' => $totalReview,
+                'total_review'     => $totalReview,
             ],
         ];
 
@@ -52,7 +53,48 @@ class ProfileController extends Controller
     }
 
     /**
-     * Change user password
+     * Update profil user (nama + email)
+     * PUT /api/profile
+     */
+    public function update(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'User tidak ditemukan'], 404);
+        }
+
+        // Frontend kirim { name, email }
+        $validated = $request->validate([
+            'name'  => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id_user, 'id_user'),
+            ],
+        ]);
+
+        $user->nama_lengkap = $validated['name'];
+        $user->email        = $validated['email'];
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui.',
+            'user'    => [
+                'id_user'      => $user->id_user,
+                'username'     => $user->username,
+                'email'        => $user->email,
+                'nama_lengkap' => $user->nama_lengkap,
+                'alamat'       => $user->alamat,
+                'role'         => $user->role,
+            ],
+        ]);
+    }
+
+    /**
+     * Ganti password
+     * PUT /api/profile/change-password
      */
     public function changePassword(Request $request)
     {
@@ -60,7 +102,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'current_password' => ['required', 'string'],
-            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'new_password'     => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         // Cek password lama

@@ -49,8 +49,10 @@ Route::middleware('auth:sanctum',)->group(function(){
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Profile Routes
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile/change-password', [ProfileController::class, 'changePassword']);
+     Route::get('/profile', [ProfileController::class, 'show']);
+     Route::put('/profile', [ProfileController::class, 'update']);              // <— BARU
+     Route::put('/profile/change-password', [ProfileController::class, 'changePassword']);
+
 
     // Books Routes
     Route::get('books',[BookController::class, 'index']);

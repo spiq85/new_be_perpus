@@ -36,6 +36,7 @@ class User extends Authenticatable
         'nama_lengkap',
         'alamat',
         'role',
+        'banned_at',
     ];
 
     public function loans()
