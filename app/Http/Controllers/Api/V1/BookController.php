@@ -53,6 +53,44 @@ class BookController extends Controller
         return response()->json($formatted);
     }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title'        => 'required|string|max:255',
+            'author'       => 'required|string|max:255',
+            'publisher'    => 'required|string|max:255',
+            'publish_year' => 'required|integer|min:1900|max:' . (date('Y') + 5),
+            'stock'        => 'required|integer|min:0',
+            'description'  => 'required|string',
+            'categories'   => 'nullable|array',
+            'categories.*' => 'integer|exists:categories,id_category',
+            'cover'        => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:4096',
+        ]);
+
+        $book = Book::create($request->only([
+            'title',
+            'author',
+            'publisher',
+            'publish_year',
+            'stock',
+            'description'
+        ]));
+
+        if ($request->hasFile('cover')) {
+            $book->addMediaFromRequest('cover')->toMediaCollection('cover');
+        }
+
+        if ($request->has('categories')) {
+            $categoryIds = collect($request->categories ?? [])->map(fn($v) => (int)$v)->filter()->values()->all();
+            $book->categories()->sync($categoryIds);
+        }
+
+        return response()->json([
+            'message' => 'Buku berhasil ditambahkan',
+            'data'    => $this->formatBookResponse($book->fresh(['categories', 'reviews']))
+        ], 201);
+    }
+
     // DETAIL BUKU SPESIFIK (juga include rating)
     public function show(Book $book)
     {
