@@ -17,7 +17,7 @@ class CheckOverdueLoans extends Command
 
         $today = Carbon::today();
 
-        $loans = Loan::whereIn('status_peminjaman',['dipinjam', 'terlambat', 'hilang', 'rusak'])
+        $loans = Loan::whereIn('status_peminjaman',['dipinjam', 'terlambat'])
             ->where('due_date', '<', $today)
             ->get();
 

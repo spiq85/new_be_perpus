@@ -18,8 +18,6 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             BookSeeder::class,
             LoanSeeder::class,
-            ReviewSeeder::class,
-            CollectionSeeder::class,
         ]);
     }
 }

@@ -43,7 +43,8 @@ return new class extends Migration
 
             // denda (kalau nanti lo mau hitung terlambat / hilang / rusak)
             $table->integer('denda')->default(0);
-            
+
+            // kondisi buku saat dikembalikan (diisi oleh petugas)
             $table->enum('requested_return_condition', ['baik', 'hilang', 'rusak'])->nullable();
 
             // catatan bebas dari user

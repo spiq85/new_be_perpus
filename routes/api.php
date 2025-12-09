@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request){
     return $request->user();
 });
 
+
 // User Routes
 Route::middleware('auth:sanctum',)->group(function(){
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -63,6 +64,7 @@ Route::middleware('auth:sanctum',)->group(function(){
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::put('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
     Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
 
     // Routes Review

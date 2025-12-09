@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Loan;
 use App\Models\Book;
 use App\Models\Review;
+use Carbon\Carbon;
 use App\Events\LoanRequested;
 use App\Events\LoanStatusUpdated;
 
@@ -257,26 +258,50 @@ class LoanController extends Controller
         ]);
 
         if ($loan->status_peminjaman !== 'menunggu_validasi_pengembalian') {
-            return response()->json(['message' => 'Loan ini belum minta pengembalian / sudah diproses.'], 422);
+            return response()->json(['message' => 'Bukan status menunggu validasi'], 422);
         }
 
+        $today = Carbon::today();
+        $denda = 0;
+
+        // 1. Hitung denda keterlambatan
+        if ($loan->due_date && Carbon::parse($loan->due_date)->lt($today)) {
+            $telatHari = Carbon::parse($loan->due_date)->diffInDays($today);
+            $denda += $telatHari * 5000;
+        }
+
+        // 2. Tambah denda rusak/hilang
         $finalStatus = match ($request->condition) {
             'rusak'  => 'rusak',
             'hilang' => 'hilang',
             default  => 'dikembalikan',
         };
 
+        if ($request->condition === 'rusak') {
+            $denda += 25000;
+        } elseif ($request->condition === 'hilang') {
+            $denda += 50000;
+        }
+
+        // INI YANG PALING PENTING! UPDATE DENDA-NYA!
         $loan->update([
             'status_peminjaman'    => $finalStatus,
             'tanggal_pengembalian' => now(),
+            'denda'                => $denda, // <--- INI HARUS ADA!
         ]);
+
+        // Kembalikan stok kalau bukan hilang
+        if ($request->condition !== 'hilang') {
+            Book::where('id_book', $loan->id_book)->increment('stock');
+        }
 
         $loan->load(['book', 'user']);
         LoanStatusUpdated::dispatch($loan);
 
         return response()->json([
-            'message' => "Buku diproses, status akhir: {$finalStatus}. Anda bisa memberikan rating dan ulasan.",
+            'message' => 'Pengembalian berhasil diproses',
             'data'    => $loan,
+            'denda_total' => $denda
         ]);
     }
 }

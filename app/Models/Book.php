@@ -21,6 +21,8 @@ class Book extends Model implements HasMedia
         'publish_year',
         'description',
         'stock',
+        'reviews_avg_rating',
+        'reviews_count',
     ];
 
     public function categories()
